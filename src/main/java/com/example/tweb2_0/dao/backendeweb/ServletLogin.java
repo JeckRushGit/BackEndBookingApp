@@ -1,12 +1,9 @@
 package com.example.tweb2_0.dao.backendeweb;
 
-
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.example.tweb2_0.dao.Dao;
-import com.example.tweb2_0.dao.modules.DAOException;
-import com.example.tweb2_0.dao.modules.Teaching;
-import com.example.tweb2_0.dao.modules.User;
+import com.example.tweb2_0.dao.modules.*;
 import com.google.gson.Gson;
 
 import javax.servlet.RequestDispatcher;
