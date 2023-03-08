@@ -224,6 +224,9 @@ public class Dao {
             con = connectToDB();
             String query = "SELECT * FROM prenotazioni WHERE Email_docente = '" + professor.getEmail() + "' AND Titolo_corso = '" + course.getCourse_titol() + "' AND Email_utente = '" + user.getEmail() + "' AND Giorno = '" + day + "' AND Mese = '" + month + "' AND Orario = '" + hour + "' AND Stato = 3";
             checkForDeleteDate(query, con);
+            if(checkForBookingAv(user,day,month,hour,con)){
+                throw new DAOException(DAOException._FAIL_TO_INSERT);
+            }
             PreparedStatement stmt = con.prepareStatement("IF (SELECT COUNT(*) FROM insegnamenti WHERE Email_docente = ? AND Titolo_corso = ? AND Delete_date <> '') = 0 AND (SELECT COUNT(*) FROM utenti WHERE Email = ? AND Delete_date <> '') = 0 THEN INSERT INTO prenotazioni (Email_docente,Titolo_corso,Email_utente,Giorno,Mese,Orario) VALUES (?,?,?,?,?,?); END IF;");
             stmt.setString(1, professor.getEmail());
             stmt.setString(2, course.getCourse_titol());
@@ -242,46 +245,54 @@ public class Dao {
         }
     }
 
+    /*Controlla che l'utente non abbia già prenotato una lezione per quell'ora e in quel giorno,se sì ritorna true,false altrimenti*/
+    private boolean checkForBookingAv(User user,int day,int month,String hour,Connection con) throws SQLException{
+        PreparedStatement stmt = con.prepareStatement("SELECT * FROM prenotazioni WHERE Email_utente = ? AND Giorno = ? AND Mese = ? AND Orario = ? AND Delete_date = '' ");
+        stmt.setString(1,user.getEmail());
+        stmt.setInt(2,day);
+        stmt.setInt(3,month);
+        stmt.setString(4,hour);
+        ResultSet res = stmt.executeQuery();
+        return res.isBeforeFirst();
+    }
+
+
+
     public int removeBookings(Professor professor, Course course, User user, int day, int month, String hour) throws DAOException {
         Connection con = null;
         try {
             con = connectToDB();
             PreparedStatement stmt = null;
             if (professor != null && course != null && user != null) {
-                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ?,Delete_date = ? WHERE Email_docente = ? AND Titolo_corso = ? AND Email_utente = ? AND Giorno = ? AND Mese = ? AND Orario = ? AND Stato = 1 AND Delete_date = ''");
+                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ? WHERE Email_docente = ? AND Titolo_corso = ? AND Email_utente = ? AND Giorno = ? AND Mese = ? AND Orario = ? AND Stato = 1 AND Delete_date = ''");
                 stmt.setInt(1, 3);               // STATE 3 == Deleted
-                stmt.setString(2, CustomDate.getDate());
-                stmt.setString(3, professor.getEmail());
-                stmt.setString(4, course.getCourse_titol());
-                stmt.setString(5, user.getEmail());
-                stmt.setInt(6, day);
-                stmt.setInt(7, month);
-                stmt.setString(8, hour);
+                stmt.setString(2, professor.getEmail());
+                stmt.setString(3, course.getCourse_titol());
+                stmt.setString(4, user.getEmail());
+                stmt.setInt(5, day);
+                stmt.setInt(6, month);
+                stmt.setString(7, hour);
             }
             if (professor != null && course != null && user == null) {
-                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ?,Delete_date = ? WHERE Email_docente = ? AND Titolo_corso = ? AND Stato = 1 AND Delete_date = ''");
+                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ? WHERE Email_docente = ? AND Titolo_corso = ? AND Stato = 1 AND Delete_date = ''");
                 stmt.setInt(1, 3);
-                stmt.setString(2, CustomDate.getDate());
-                stmt.setString(3, professor.getEmail());
-                stmt.setString(4, course.getCourse_titol());
-            }
-            if (professor == null && course != null && user == null) {
-                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ?,Delete_date = ? WHERE Titolo_corso = ? AND Stato = 1 AND Delete_date = ''");
-                stmt.setInt(1, 3);
-                stmt.setString(2, CustomDate.getDate());
+                stmt.setString(2, professor.getEmail());
                 stmt.setString(3, course.getCourse_titol());
             }
-            if (professor != null && course == null && user == null) {
-                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ?,Delete_date = ? WHERE Email_docente = ? AND Stato = 1 AND Delete_date = ''");
+            if (professor == null && course != null && user == null) {
+                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ? WHERE Titolo_corso = ? AND Stato = 1 AND Delete_date = ''");
                 stmt.setInt(1, 3);
-                stmt.setString(2, CustomDate.getDate());
-                stmt.setString(3, professor.getEmail());
+                stmt.setString(2, course.getCourse_titol());
+            }
+            if (professor != null && course == null && user == null) {
+                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ? WHERE Email_docente = ? AND Stato = 1 AND Delete_date = ''");
+                stmt.setInt(1, 3);
+                stmt.setString(2, professor.getEmail());
             }
             if (professor == null && course == null && user != null) {
-                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ?,Delete_date = ? WHERE Email_utente = ? AND Stato = 1 AND Delete_date = ''");
+                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ? WHERE Email_utente = ? AND Stato = 1 AND Delete_date = ''");
                 stmt.setInt(1, 3);
-                stmt.setString(2, CustomDate.getDate());
-                stmt.setString(3, user.getEmail());
+                stmt.setString(2, user.getEmail());
             }
             int res = stmt.executeUpdate();
             return res;
@@ -312,7 +323,7 @@ public class Dao {
         Connection con = null;
         try {
             con = connectToDB();
-            PreparedStatement stmt = con.prepareStatement("SELECT * FROM prenotazioni p JOIN docenti d ON p.Email_docente = d.Email JOIN utenti u ON p.Email_utente = u.Email");
+            PreparedStatement stmt = con.prepareStatement("SELECT * FROM prenotazioni p JOIN docenti d ON p.Email_docente = d.Email JOIN utenti u ON p.Email_utente = u.Email WHERE Stato != 2 && Stato != 3 AND p.Delete_date = '' AND p.Delete_date = '' ");
             ResultSet res = stmt.executeQuery();
 
             List<AvBookings2> list = new ArrayList<>();
@@ -346,7 +357,9 @@ public class Dao {
             con = connectToDB();
             Set<AvBookings> set = new HashSet<>();
             List<AvBookings> list1 = getAllPossibleBookings(startingDayOfWeek, month);
+
             List<AvBookings2> list2 = getBookings();
+
             for (AvBookings a : list1) {
                 if (!list2.contains(a)) {
                     set.add(a);
@@ -365,12 +378,29 @@ public class Dao {
 
     public List<AvBookings> getOnlyAvailableBookingsForCourseAndProfessor(int startingDayOfWeek, int month,Course course,Professor professor) throws DAOException {
         List<AvBookings> list = getOnlyAvailableBookings(startingDayOfWeek,month);
+
         List<AvBookings> filteredList = new ArrayList<>();
         for(AvBookings b :list){
             if(b.getCourse().equals(course) && b.getProfessor().equals(professor)){
                 filteredList.add(b);
             }
         }
+        return filteredList;
+    }
+
+    /*OTTIENI LE LEZIONI DISPONIBILI DA PRENOTARE DI MODO CHE L'UTENTE NON VEDA LEZIONI GIA' PRENOTATE DA LUI PER QUELL'ORA */
+    public List<AvBookings> getOnlyAvailableBookingsForCourseAndProfessorPlusUser(int startingDayOfWeek, int month,Course course,Professor professor,User user) throws DAOException {
+        List<AvBookings> filteredList = getOnlyAvailableBookingsForCourseAndProfessor(startingDayOfWeek,month,course,professor);
+        List<AvBookings2> l = getBookingsForUser(user,1);
+        for(int i = 0 ; i < filteredList.size() ; i++){
+            for(AvBookings2 a : l){
+                if(filteredList.get(i).getDay() == a.getDay() && filteredList.get(i).getMonth() == a.getMonth() && filteredList.get(i).getHour().equals(a.getHour())){
+
+                    filteredList.remove(i);
+                }
+            }
+        }
+
         return filteredList;
     }
 
@@ -426,6 +456,7 @@ public class Dao {
             stmt.setInt(5,month);
             stmt.setString(6,hour);
             int res = stmt.executeUpdate();
+
             return res;
         }catch (SQLException e){
             throw new DAOException(e);
@@ -464,7 +495,7 @@ public class Dao {
 
     public void registerDriver() {
         try {
-            DriverManager.registerDriver(new com.mysql.jdbc.Driver());
+            DriverManager.registerDriver(new com.mysql.cj.jdbc.Driver());
             System.out.println("The drivers are correct");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -480,8 +511,9 @@ public class Dao {
     public static void main(String[] args) {
         Dao d = new Dao("jdbc:mysql://localhost:3306/ripetizioni","root","");
         try {
-            System.out.println(d.getOnlyAvailableBookings(16,1).size());
-        } catch (DAOException e) {
+            Connection con = d.connectToDB();
+            con.close();
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
 

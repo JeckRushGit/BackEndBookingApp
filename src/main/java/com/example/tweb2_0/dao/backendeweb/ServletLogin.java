@@ -5,15 +5,11 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.example.tweb2_0.dao.Dao;
 import com.example.tweb2_0.dao.modules.*;
 import com.google.gson.Gson;
+import jakarta.servlet.*;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
