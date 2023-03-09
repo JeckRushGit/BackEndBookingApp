@@ -224,9 +224,9 @@ public class Dao {
             con = connectToDB();
             String query = "SELECT * FROM prenotazioni WHERE Email_docente = '" + professor.getEmail() + "' AND Titolo_corso = '" + course.getCourse_titol() + "' AND Email_utente = '" + user.getEmail() + "' AND Giorno = '" + day + "' AND Mese = '" + month + "' AND Orario = '" + hour + "' AND Stato = 3";
             checkForDeleteDate(query, con);
-            if(checkForBookingAv(user,day,month,hour,con)){
-                throw new DAOException(DAOException._FAIL_TO_INSERT);
-            }
+//            if(checkForBookingAv(user,day,month,hour,con)){
+//                throw new DAOException(DAOException._FAIL_TO_INSERT);
+//            }
             PreparedStatement stmt = con.prepareStatement("IF (SELECT COUNT(*) FROM insegnamenti WHERE Email_docente = ? AND Titolo_corso = ? AND Delete_date <> '') = 0 AND (SELECT COUNT(*) FROM utenti WHERE Email = ? AND Delete_date <> '') = 0 THEN INSERT INTO prenotazioni (Email_docente,Titolo_corso,Email_utente,Giorno,Mese,Orario) VALUES (?,?,?,?,?,?); END IF;");
             stmt.setString(1, professor.getEmail());
             stmt.setString(2, course.getCourse_titol());
@@ -391,7 +391,11 @@ public class Dao {
     /*OTTIENI LE LEZIONI DISPONIBILI DA PRENOTARE DI MODO CHE L'UTENTE NON VEDA LEZIONI GIA' PRENOTATE DA LUI PER QUELL'ORA */
     public List<AvBookings> getOnlyAvailableBookingsForCourseAndProfessorPlusUser(int startingDayOfWeek, int month,Course course,Professor professor,User user) throws DAOException {
         List<AvBookings> filteredList = getOnlyAvailableBookingsForCourseAndProfessor(startingDayOfWeek,month,course,professor);
-        List<AvBookings2> l = getBookingsForUser(user,1);
+
+        System.out.println(filteredList.size());
+
+        List<AvBookings2> l = getBookingsForUserV2(user,null,professor,course);
+        System.out.println(l.size());
         for(int i = 0 ; i < filteredList.size() ; i++){
             for(AvBookings2 a : l){
                 if(filteredList.get(i).getDay() == a.getDay() && filteredList.get(i).getMonth() == a.getMonth() && filteredList.get(i).getHour().equals(a.getHour())){
@@ -442,6 +446,50 @@ public class Dao {
             handleFinalBlock(con);
         }
     }
+
+    public List<AvBookings2> getBookingsForUserV2(User user, Integer state,Professor professor,Course course) throws DAOException {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        try {
+            con = connectToDB();
+            if (state == null) {
+                stmt = con.prepareStatement("SELECT * FROM prenotazioni p JOIN docenti d ON p.Email_docente = d.Email JOIN utenti u ON p.Email_utente = u.Email WHERE u.Email = ? AND Email_docente = ? AND Titolo_corso = ?");
+                stmt.setString(1,user.getEmail());
+                stmt.setString(2,professor.getEmail());
+                stmt.setString(3,course.getCourse_titol());
+            }
+            else{
+                stmt = con.prepareStatement("SELECT * FROM prenotazioni p JOIN docenti d ON p.Email_docente = d.Email JOIN utenti u ON p.Email_utente = u.Email WHERE u.Email = ? AND Stato = ? ");
+                stmt.setString(1,user.getEmail());
+                stmt.setInt(2,state);
+            }
+            ResultSet res = stmt.executeQuery();
+            List<AvBookings2> list = new ArrayList<>();
+            while (res.next()) {
+                String professorEmail = res.getString("Email_docente");
+                String professorName = res.getString("d.Nome");
+                String professorSurname = res.getString("d.Cognome");
+                String courseTitol = res.getString("Titolo_corso");
+                String userEmail = res.getString("u.Email");
+                String userName = res.getString("u.Nome");
+                String userSurname = res.getString("u.Cognome");
+                Integer day = res.getInt("Giorno");
+                Integer month = res.getInt("Mese");
+                String hour = res.getString("Orario");
+                Integer state1 = res.getInt("Stato");
+                AvBookings2 av = new AvBookings2(new Professor(professorEmail, professorName, professorSurname), new Course(courseTitol), day, hour, new User(userEmail, userName, userSurname), month, state1);
+                list.add(av);
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new DAOException(e);
+        } finally {
+            handleFinalBlock(con);
+        }
+    }
+
+
+    /*DA CANCELLARE E SOSTITUIRE CON QUELLA SOPRA UNA VOLTA AGGIUSTATO !!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
     public int setBookingAsDone(Professor professor, Course course, User user, int day, int month, String hour) throws DAOException{
         Connection con = null;

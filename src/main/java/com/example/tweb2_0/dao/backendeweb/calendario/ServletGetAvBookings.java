@@ -1,4 +1,4 @@
-package com.example.tweb2_0.dao.backendeweb;
+package com.example.tweb2_0.dao.backendeweb.calendario;
 
 import com.example.tweb2_0.dao.Dao;
 import com.example.tweb2_0.dao.modules.*;
@@ -50,9 +50,15 @@ public class ServletGetAvBookings extends HttpServlet {
         String emailProfessore = request.getParameter("emailProfessore");
         String emailUtente = request.getParameter("emailUtente");
 
-        if(titoloCorso != null && emailProfessore != null && emailUtente != null){
+        if(titoloCorso != null && emailProfessore != null){
             try {
-                List<AvBookings> list = dao.getOnlyAvailableBookingsForCourseAndProfessorPlusUser(16,1,new Course(titoloCorso),new Professor(emailProfessore),new User(emailUtente));
+                List<AvBookings> list;
+                if(emailUtente != null){  //client
+                    list = dao.getOnlyAvailableBookingsForCourseAndProfessorPlusUser(16,1,new Course(titoloCorso),new Professor(emailProfessore),new User(emailUtente));
+                }
+                else{       //guest
+                    list = dao.getOnlyAvailableBookingsForCourseAndProfessor(16,1,new Course(titoloCorso),new Professor(emailProfessore));
+                }
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 String res = gson.toJson(list);
                 JsonElement je = JsonParser.parseString(res);

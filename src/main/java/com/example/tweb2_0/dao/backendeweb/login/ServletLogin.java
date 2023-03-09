@@ -1,4 +1,4 @@
-package com.example.tweb2_0.dao.backendeweb;
+package com.example.tweb2_0.dao.backendeweb.login;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;

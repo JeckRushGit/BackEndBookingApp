@@ -1,4 +1,5 @@
-package com.example.tweb2_0.dao.backendeweb;
+package com.example.tweb2_0.dao.backendeweb.agenda;
+
 import com.example.tweb2_0.dao.Dao;
 import com.example.tweb2_0.dao.modules.AvBookings2;
 import com.example.tweb2_0.dao.modules.DAOException;
@@ -42,20 +43,19 @@ public class ServletGetBookingsForUser extends HttpServlet {
         String email = request.getParameter("email");
         String statoString = request.getParameter("stato");
         Integer stato = null;
-        try{
-            if(statoString != null){
+        try {
+            if (statoString != null) {
                 stato = Integer.valueOf(statoString);
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email),stato);
+                List<AvBookings2> list = dao.getBookingsForUser(new User(email), stato);
                 Gson g = new Gson();
                 String json = g.toJson(list);
                 PrintWriter out = response.getWriter();
                 out.println(json);
                 out.flush();
+            } else {
+                List<AvBookings2> list = dao.getBookingsForUser(new User(email), null);
             }
-            else{
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email),null);
-            }
-        }catch (DAOException e){
+        } catch (DAOException e) {
             System.out.println(e.getMessage());
         }
     }
@@ -67,20 +67,19 @@ public class ServletGetBookingsForUser extends HttpServlet {
         String email = request.getParameter("email");
         String statoString = request.getParameter("stato");
         Integer stato = null;
-        try{
-            if(statoString != null){
+        try {
+            if (statoString != null) {
                 stato = Integer.valueOf(statoString);
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email),stato);
+                List<AvBookings2> list = dao.getBookingsForUser(new User(email), stato);
                 Gson g = new Gson();
                 String json = g.toJson(list);
                 PrintWriter out = response.getWriter();
                 out.println(json);
                 out.flush();
+            } else {
+                List<AvBookings2> list = dao.getBookingsForUser(new User(email), null);
             }
-            else{
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email),null);
-            }
-        }catch (DAOException e){
+        } catch (DAOException e) {
             System.out.println(e.getMessage());
         }
     }

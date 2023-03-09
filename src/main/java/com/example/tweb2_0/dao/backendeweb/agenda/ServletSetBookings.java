@@ -1,4 +1,4 @@
-package com.example.tweb2_0.dao.backendeweb;
+package com.example.tweb2_0.dao.backendeweb.agenda;
 
 import com.example.tweb2_0.dao.Dao;
 import com.example.tweb2_0.dao.modules.Course;
