@@ -63,9 +63,17 @@ public class ServletBookTeaching extends HttpServlet {
             int month = Integer.valueOf(map.get("month"));
             String hour = map.get("hour");
             try {
-                dao.insertBooking(professor,course,user,day,month,hour);
-                out.write("{errore : nessun errore}");
-                out.flush();
+                boolean flag = dao.insertBooking(professor,course,user,day,month,hour);
+                if(flag){
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    out.write("{errore : nessun errore}");
+                    out.flush();
+
+                }else{
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    out.write("Erroreeeeeeeee");
+                    out.flush();
+                }
             } catch (DAOException e) {
                 if(e.getErrorCode() == 1){
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -73,7 +81,13 @@ public class ServletBookTeaching extends HttpServlet {
                     out.flush();
                 }
                 else{
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    if(e.getErrorCode() == 5){
+                        response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
+                    }
+                    else{
+                        System.out.println(e.getMessage());
+                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    }
                     out.println("errore con il server");
                     out.flush();
                 }

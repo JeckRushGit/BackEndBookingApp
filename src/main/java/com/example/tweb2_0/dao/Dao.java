@@ -264,14 +264,15 @@ public class Dao {
             con = connectToDB();
             PreparedStatement stmt = null;
             if (professor != null && course != null && user != null) {
-                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ? WHERE Email_docente = ? AND Titolo_corso = ? AND Email_utente = ? AND Giorno = ? AND Mese = ? AND Orario = ? AND Stato = 1 AND Delete_date = ''");
+                stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ?,Delete_date = ? WHERE Email_docente = ? AND Titolo_corso = ? AND Email_utente = ? AND Giorno = ? AND Mese = ? AND Orario = ? AND Stato = 1 AND Delete_date = ''");
                 stmt.setInt(1, 3);               // STATE 3 == Deleted
-                stmt.setString(2, professor.getEmail());
-                stmt.setString(3, course.getCourse_titol());
-                stmt.setString(4, user.getEmail());
-                stmt.setInt(5, day);
-                stmt.setInt(6, month);
-                stmt.setString(7, hour);
+                stmt.setString(2,CustomDate.getDate());
+                stmt.setString(3, professor.getEmail());
+                stmt.setString(4, course.getCourse_titol());
+                stmt.setString(5, user.getEmail());
+                stmt.setInt(6, day);
+                stmt.setInt(7, month);
+                stmt.setString(8, hour);
             }
             if (professor != null && course != null && user == null) {
                 stmt = con.prepareStatement("UPDATE prenotazioni SET Stato = ? WHERE Email_docente = ? AND Titolo_corso = ? AND Stato = 1 AND Delete_date = ''");
@@ -453,10 +454,10 @@ public class Dao {
         try {
             con = connectToDB();
             if (state == null) {
-                stmt = con.prepareStatement("SELECT * FROM prenotazioni p JOIN docenti d ON p.Email_docente = d.Email JOIN utenti u ON p.Email_utente = u.Email WHERE u.Email = ? AND Email_docente = ? AND Titolo_corso = ?");
+                stmt = con.prepareStatement("SELECT * FROM prenotazioni p JOIN docenti d ON p.Email_docente = d.Email JOIN utenti u ON p.Email_utente = u.Email WHERE u.Email = ? HAVING Stato != 3");
                 stmt.setString(1,user.getEmail());
-                stmt.setString(2,professor.getEmail());
-                stmt.setString(3,course.getCourse_titol());
+//                stmt.setString(2,professor.getEmail());
+//                stmt.setString(3,course.getCourse_titol());
             }
             else{
                 stmt = con.prepareStatement("SELECT * FROM prenotazioni p JOIN docenti d ON p.Email_docente = d.Email JOIN utenti u ON p.Email_utente = u.Email WHERE u.Email = ? AND Stato = ? ");
