@@ -79,6 +79,24 @@ public class Dao {
         }
     }
 
+    public List<User> getUsers() throws DAOException {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        List<User> listOfUsers = new ArrayList<>();
+        try {
+            con = connectToDB();
+            stmt = con.prepareStatement("SELECT DISTINCT Email,Nome,Cognome FROM utenti WHERE Delete_date = '' AND Ruolo = 'Client' ");
+            ResultSet res = stmt.executeQuery();
+            while (res.next()){
+                User u = new User(res.getString("Email"),res.getString("Nome"),res.getString("Cognome"));
+                listOfUsers.add(u);
+            }
+            return listOfUsers;
+        }catch (SQLException e){
+            throw new DAOException(e);
+        }
+    }
+
     public void insertProfessor(Professor new_professor) throws DAOException {
         Connection con = null;
         try {
@@ -390,13 +408,13 @@ public class Dao {
     }
 
     /*OTTIENI LE LEZIONI DISPONIBILI DA PRENOTARE DI MODO CHE L'UTENTE NON VEDA LEZIONI GIA' PRENOTATE DA LUI PER QUELL'ORA */
-    public List<AvBookings> getOnlyAvailableBookingsForCourseAndProfessorPlusUser(int startingDayOfWeek, int month,Course course,Professor professor,User user) throws DAOException {
+    public List<AvBookings>     getOnlyAvailableBookingsForCourseAndProfessorPlusUser(int startingDayOfWeek, int month,Course course,Professor professor,User user) throws DAOException {
         List<AvBookings> filteredList = getOnlyAvailableBookingsForCourseAndProfessor(startingDayOfWeek,month,course,professor);
 
-        System.out.println(filteredList.size());
+
 
         List<AvBookings2> l = getBookingsForUserV2(user,null,professor,course);
-        System.out.println(l.size());
+
         for(int i = 0 ; i < filteredList.size() ; i++){
             for(AvBookings2 a : l){
                 if(filteredList.get(i).getDay() == a.getDay() && filteredList.get(i).getMonth() == a.getMonth() && filteredList.get(i).getHour().equals(a.getHour())){
@@ -407,6 +425,44 @@ public class Dao {
         }
 
         return filteredList;
+    }
+
+
+
+    public void getAvailableBookings(Course course,Professor professor,Integer day,Integer month) throws DAOException {
+        try {
+            Connection con = connectToDB();
+            PreparedStatement stmt = con.prepareStatement("WITH possible_combinations AS (\n" +
+                    " WITH days AS ( SELECT 0 AS Giorno UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 ), \n" +
+                    " times AS ( SELECT '15:00-16:00' AS Orario UNION SELECT '16:00-17:00' UNION SELECT '17:00-18:00' UNION SELECT '18:00-19:00' ),\n" +
+                    " courses AS ( SELECT ? AS Titolo_corso ), \n" +
+                    " teachers AS ( SELECT ? AS Email_docente ),\n" +
+                    "    month AS (SELECT ? AS Mese)\n" +
+                    " \n" +
+                    " SELECT DISTINCT Giorno + ? AS Giorno,Mese, Orario, Titolo_corso, Email_docente FROM days \n" +
+                    " CROSS JOIN times \n" +
+                    " CROSS JOIN courses \n" +
+                    " CROSS JOIN teachers\n" +
+                    " CROSS JOIN month) \n" +
+                    " \n" +
+                    " \n" +
+                    " \n" +
+                    " SELECT pc.Email_docente,pc.Giorno,pc.Mese,pc.Orario,pc.Titolo_corso,p.Email_utente,p.Stato\n" +
+                    " FROM possible_combinations as pc LEFT JOIN prenotazioni as P on pc.Giorno = p.Giorno AND pc.Orario = p.Orario and pc.Titolo_corso = p.Titolo_corso AND pc.Email_docente = p.Email_docente;\n" +
+                    " ");
+            stmt.setString(1,course.getCourse_titol());
+            stmt.setString(2,professor.getEmail());
+            stmt.setInt(3,month);
+            stmt.setInt(4,day);
+
+            ResultSet res = stmt.executeQuery();
+            while(res.next()){
+                System.out.println(res.getString("Email_docente")+" "+res.getInt("Giorno")+" "+res.getInt("Mese")+" "+res.getString("Orario")+" "+res.getString("Titolo_corso")+" "+res.getString("Email_utente")+" "+res.getInt("Stato"));
+            }
+
+        } catch (SQLException e) {
+            throw new DAOException(e);
+        }
     }
 
     public List<AvBookings2> getBookingsForUser(User user, Integer state) throws DAOException {
@@ -560,9 +616,8 @@ public class Dao {
     public static void main(String[] args) {
         Dao d = new Dao("jdbc:mysql://localhost:3306/ripetizioni","root","");
         try {
-            Connection con = d.connectToDB();
-            con.close();
-        } catch (SQLException e) {
+            d.getAvailableBookings(new Course("Matematica"),new Professor("pippo@gmail.com"),16,1);
+        } catch (DAOException e) {
             throw new RuntimeException(e);
         }
 

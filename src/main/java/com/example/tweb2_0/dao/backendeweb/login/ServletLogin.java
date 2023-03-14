@@ -51,7 +51,7 @@ public class ServletLogin extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-        System.out.println("Richiesta");
+
         response.setContentType("application/jwt");
         String email = request.getParameter("email");
         String password = request.getParameter("password");

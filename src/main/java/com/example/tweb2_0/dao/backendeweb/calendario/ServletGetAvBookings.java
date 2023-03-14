@@ -63,6 +63,7 @@ public class ServletGetAvBookings extends HttpServlet {
                 String res = gson.toJson(list);
                 JsonElement je = JsonParser.parseString(res);
                 res = gson.toJson(je);
+                System.out.println(res);
                 out.println(res);
                 out.flush();
             } catch (DAOException e) {

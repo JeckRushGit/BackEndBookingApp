@@ -54,7 +54,7 @@ public class ServletSetBookings extends HttpServlet {
 
         try {
             if (professorEmail != null && userEmail != null && day != null && month != null && hour != null && state != null && course != null) {
-                System.out.println("qua dentro!!!");
+
                 if (state.equals("2")) {        //setta la lezione come effettuata
                     res = dao.setBookingAsDone(new Professor(professorEmail), new Course(course), new User(userEmail), Integer.valueOf(day), Integer.valueOf(month), hour);
                     response.setStatus(200);
