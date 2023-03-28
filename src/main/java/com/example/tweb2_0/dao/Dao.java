@@ -408,23 +408,38 @@ public class Dao {
     }
 
     /*OTTIENI LE LEZIONI DISPONIBILI DA PRENOTARE DI MODO CHE L'UTENTE NON VEDA LEZIONI GIA' PRENOTATE DA LUI PER QUELL'ORA */
-    public List<AvBookings>     getOnlyAvailableBookingsForCourseAndProfessorPlusUser(int startingDayOfWeek, int month,Course course,Professor professor,User user) throws DAOException {
+    public List<AvBookings>    getOnlyAvailableBookingsForCourseAndProfessorPlusUser(int startingDayOfWeek, int month,Course course,Professor professor,User user) throws DAOException {
         List<AvBookings> filteredList = getOnlyAvailableBookingsForCourseAndProfessor(startingDayOfWeek,month,course,professor);
 
 
 
         List<AvBookings2> l = getBookingsForUserV2(user,null,professor,course);
 
-        for(int i = 0 ; i < filteredList.size() ; i++){
-            for(AvBookings2 a : l){
-                if(filteredList.get(i).getDay() == a.getDay() && filteredList.get(i).getMonth() == a.getMonth() && filteredList.get(i).getHour().equals(a.getHour())){
+        List<AvBookings> l2 = new ArrayList<>();
 
-                    filteredList.remove(i);
+
+        boolean flag = false;
+
+
+
+
+
+
+        for(AvBookings avb : filteredList){
+            flag = false;
+            for(AvBookings2 a : l){
+                if(avb.getDay().equals(a.getDay()) && avb.getMonth().equals(a.getMonth()) && avb.getHour().equals(a.getHour())){
+                    flag = true;
                 }
+            }
+            if(!flag){
+                l2.add(avb);
             }
         }
 
-        return filteredList;
+
+
+        return l2;
     }
 
 
@@ -456,9 +471,7 @@ public class Dao {
             stmt.setInt(4,day);
 
             ResultSet res = stmt.executeQuery();
-            while(res.next()){
-                System.out.println(res.getString("Email_docente")+" "+res.getInt("Giorno")+" "+res.getInt("Mese")+" "+res.getString("Orario")+" "+res.getString("Titolo_corso")+" "+res.getString("Email_utente")+" "+res.getInt("Stato"));
-            }
+
 
         } catch (SQLException e) {
             throw new DAOException(e);

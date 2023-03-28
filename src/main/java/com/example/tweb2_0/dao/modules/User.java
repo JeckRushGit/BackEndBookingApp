@@ -10,9 +10,6 @@ public class User {
     private String profession;
 
     public User(String email, String name, String surname, String password,String birthday,String profession, String role) throws IllegalArgumentException{
-        if(!role.equals("Client") && !role.equals("Administrator")){
-            throw new IllegalArgumentException("Role must be either Client or Administrator");
-        }
         this.email = email;
         this.name = name;
         this.surname = surname;

@@ -9,11 +9,8 @@ import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
-
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Date;
-import java.util.List;
 
 
 @WebServlet(name = "ServletLogin", value = "/ServletLogin")
@@ -36,55 +33,90 @@ public class ServletLogin extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-        response.setContentType("application/json");
-        RequestDispatcher requestDispatcher = context.getNamedDispatcher("ServletGetTeachings");
-        requestDispatcher.include(request,response);
-        List<Teaching> list = (List<Teaching>) request.getAttribute("teachingList");
-        Gson g = new Gson();
-        String res = g.toJson(list);
-        PrintWriter out = response.getWriter();
-        out.println(res);
-        out.flush();
-        out.close();
-    }
-
-    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-
         response.setContentType("application/jwt");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
-        try {
-            User u = dao.getUser(email);
-            if (u != null) {
-                if (u.getPassword().equals(password)) {
-                    String jwt = JWT.create()
-                            .withIssuer("myIssuer")
-                            .withClaim("email",email)
-                            .withClaim("name",u.getName())
-                            .withClaim("surname",u.getSurname())
-                            .withClaim("password",u.getPassword())
-                            .withClaim("role",u.getRole())
-                            .withClaim("birthday",u.getBirthday())
-                            .withClaim("profession",u.getProfession())
-                            .withExpiresAt(new Date(System.currentTimeMillis() + 6000000L))
-                            .sign(Algorithm.HMAC256("secret"));
+        String action = request.getParameter("action");
+        User user;
+        HttpSession session;
+        if (action != null && action.equals("logout")) {
+            response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            session = request.getSession(false);
+            if (session != null)
+                session.invalidate();
+        } else {
+            if (email != null && password != null) {
+                response.setContentType("application/json");
+                if (action != null && action.equals("web")) { //web
+                    response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+                    response.setHeader("Access-Control-Allow-Credentials", "true");
+                    try {
+                        user = dao.getUser(email);
+                        if (user != null && checkPassword(user, password)) {
+                            session = request.getSession(true);
 
-                    response.getWriter().write(jwt);
+                            session.setAttribute("email", user.getEmail());
+                            session.setAttribute("name", user.getName());
+                            session.setAttribute("surname", user.getSurname());
+                            session.setAttribute("role", user.getRole());
+                            session.setAttribute("birthday", user.getBirthday());
+                            session.setAttribute("profession",user.getProfession());
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            Gson gson = new Gson();
+                            String token = gson.toJson(session);
+                            response.getWriter().println(token);
+                        } else {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        }
+                    } catch (DAOException e) {
+                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                        System.out.println(e.getMessage());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {                    //mobile
+                    try {
+                        user = dao.getUser(email);
+                        if (user != null) {
+                            if (user.getPassword().equals(password)) {
+                                String jwt = JWT.create()
+                                        .withIssuer("myIssuer")
+                                        .withClaim("email", email)
+                                        .withClaim("name", user.getName())
+                                        .withClaim("surname", user.getSurname())
+                                        .withClaim("password", user.getPassword())
+                                        .withClaim("role", user.getRole())
+                                        .withClaim("birthday", user.getBirthday())
+                                        .withClaim("profession", user.getProfession())
+                                        .withExpiresAt(new Date(System.currentTimeMillis() + 6000000L))
+                                        .sign(Algorithm.HMAC256("secret"));
+
+                                response.getWriter().write(jwt);
+                            } else {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.getWriter().println("Wrong password");
+                            }
+                        } else {
+                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                            response.getWriter().println("User not found");
+                        }
+                    } catch (DAOException | IOException e) {
+                        System.out.println(e.getMessage());
+                    }
                 }
-                else{
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().println("Wrong password");
-                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
-            else{
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.getWriter().println("User not found");
-            }
-        } catch (DAOException | IOException e) {
-            System.out.println(e.getMessage());
         }
     }
+
+
+    private boolean checkPassword(User user, String passwordToCheck) {
+        return user.getPassword().equals(passwordToCheck);
+    }
+
+
 }
 

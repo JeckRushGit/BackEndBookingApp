@@ -40,6 +40,7 @@ public class ServletAdminGetBookings extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.addHeader("Access-Control-Allow-Origin", "*");
         response.setContentType("application/json");
         String action = request.getParameter("action");
         PrintWriter out = response.getWriter();
@@ -52,7 +53,7 @@ public class ServletAdminGetBookings extends HttpServlet {
                         String res = gson.toJson(listOfUsers);
                         JsonElement je = JsonParser.parseString(res);
                         res = gson.toJson(je);
-                        System.out.println(res);
+
                         out.println(res);
                     } catch (DAOException e) {
                         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -68,7 +69,7 @@ public class ServletAdminGetBookings extends HttpServlet {
                             String res = gson.toJson(listOfBookings);
                             JsonElement je = JsonParser.parseString(res);
                             res = gson.toJson(je);
-                            System.out.println(res);
+
                             out.println(res);
                         } catch (DAOException e) {
                             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

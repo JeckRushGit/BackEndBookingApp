@@ -2,8 +2,10 @@ package com.example.tweb2_0.dao.backendeweb;
 
 
 import com.example.tweb2_0.dao.Dao;
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
@@ -31,10 +33,9 @@ public class HelloServlet extends HttpServlet {
         }
     }
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         response.setContentType("text/plain");
-        PrintWriter out = response.getWriter();
-        out.write("Ciao");
+        response.getWriter().println("ciao");
     }
 
 

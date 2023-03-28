@@ -42,27 +42,48 @@ public class ServletGetBookingsForUser extends HttpServlet {
         response.setContentType("application/json");
         String email = request.getParameter("email");
         String statoString = request.getParameter("stato");
-        Integer stato = null;
-        try {
-            if (statoString != null) {
-                stato = Integer.valueOf(statoString);
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email), stato);
-                Gson g = new Gson();
-                String json = g.toJson(list);
-                PrintWriter out = response.getWriter();
-                out.println(json);
-                out.flush();
+        String action = request.getParameter("action");
+        PrintWriter out = response.getWriter();
+
+        if (action != null && action.equals("web")) {  //sito web
+            response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            RequestDispatcher rd = context.getNamedDispatcher("ServletSessionHandler");
+            rd.include(request, response);
+            HttpSession sessionAvailable = (HttpSession) request.getAttribute("result");
+            if (sessionAvailable != null) {
+                String userEmail = (String) sessionAvailable.getAttribute("email");
+                if (statoString != null) {
+                    try {
+                        handleRequest(new User(userEmail), Integer.parseInt(statoString), out);
+                    } catch (DAOException e) {
+                        System.out.println(e.getMessage());
+                    }
+                } else {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                }
             } else {
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email), null);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
-        } catch (DAOException e) {
-            System.out.println(e.getMessage());
+
+
+        } else {   //mobile
+            try {
+                if (statoString != null) {
+                    handleRequest(new User(email), Integer.parseInt(statoString), out);
+                }
+            } catch (DAOException e) {
+                System.out.println(e.getMessage());
+            }
+
         }
+
+
     }
 
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
         String email = request.getParameter("email");
         String statoString = request.getParameter("stato");
@@ -82,6 +103,15 @@ public class ServletGetBookingsForUser extends HttpServlet {
         } catch (DAOException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+
+    void handleRequest(User user, int stato, PrintWriter out) throws DAOException {
+        List<AvBookings2> list = dao.getBookingsForUser(user, stato);
+        Gson g = new Gson();
+        String json = g.toJson(list);
+        out.println(json);
+        out.flush();
     }
 }
 

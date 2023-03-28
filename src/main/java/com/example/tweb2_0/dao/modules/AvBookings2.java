@@ -29,7 +29,7 @@ public class AvBookings2 extends AvBookings
                 ", course=" + course +
                 ", day=" + day +
                 ", hour='" + hour +
-                "user=" + user +
+                " user=" + user +
                 ", month=" + month +
                 ", state=" + state +
                 '}';
