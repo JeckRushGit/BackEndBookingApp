@@ -49,12 +49,7 @@ public class ServletSetBookings extends HttpServlet {
         String hour = request.getParameter("orario");
         String state = request.getParameter("stato");
         String action = request.getParameter("action");
-        System.out.println("email professore : "+professorEmail);
-        System.out.println("titolo corso : "+course);
-        System.out.println("giorno : "+day);
-        System.out.println("mese : "+month);
-        System.out.println("orario : "+hour);
-        System.out.println("stato : "+state);
+
 
 
         if (action != null && action.equals("web")) {  //sito web
@@ -64,16 +59,13 @@ public class ServletSetBookings extends HttpServlet {
             rd.include(request, response);
             HttpSession sessionAvailable = (HttpSession) request.getAttribute("result");
             if (sessionAvailable != null) {
-                userEmail = (String) sessionAvailable.getAttribute("email");
-                if (userEmail != null && state != null && professorEmail != null && course != null && day != null && month != null && hour != null) {
-                    try {
-                        handleSetState(state,professorEmail,course,userEmail,day,month,hour,response);
-                    } catch (DAOException e) {
-                        System.out.println(e.getMessage());
-                    }
+                if(!sessionAvailable.getAttribute("role").equals("Administrator")){
+                    userEmail = (String) sessionAvailable.getAttribute("email");
+                    handleRequest(response, professorEmail, userEmail, course, day, month, hour, state);
+                }
+                else{
 
-                } else {
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    handleRequest(response,professorEmail,userEmail,course,day,month,hour,state);
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -92,6 +84,19 @@ public class ServletSetBookings extends HttpServlet {
                 throw new RuntimeException(e);
             }
 
+        }
+    }
+
+    private void handleRequest(HttpServletResponse response, String professorEmail, String userEmail, String course, String day, String month, String hour, String state) {
+        if (userEmail != null && state != null && professorEmail != null && course != null && day != null && month != null && hour != null) {
+            try {
+                handleSetState(state, professorEmail, course, userEmail, day, month, hour, response);
+            } catch (DAOException e) {
+                System.out.println(e.getMessage());
+            }
+
+        } else {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
     }
 

@@ -60,7 +60,6 @@ public class ServletGetAvBookings extends HttpServlet {
         RequestDispatcher rd = context.getNamedDispatcher("ServletSessionHandler");
         rd.include(request, response);
         HttpSession sessionAvailable = (HttpSession) request.getAttribute("result");
-
         String action = request.getParameter("action");
 
         if (action != null && action.equals("web-getdaysandmonth")) {
@@ -75,15 +74,22 @@ public class ServletGetAvBookings extends HttpServlet {
             String json = new Gson().toJson(tmp);
             out.println(json);
             out.flush();
-        } else if (sessionAvailable != null) {
+        } else if (sessionAvailable != null && action.equals("web-getbookings-auth")) {
             try {
                 String emailUtente = (String) sessionAvailable.getAttribute("email");
-
-
-
+                handleGetBookings(titoloCorso, emailProfessore, out, emailUtente);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+        } else if(sessionAvailable == null  && action!= null && action.equals("web-getbookings-auth")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        } else if(action != null && action.equals("guest")){
+            try{
+                System.out.println("ciao");
                 List<AvBookings> list = null;
-                list = dao.getOnlyAvailableBookingsForCourseAndProfessorPlusUser(ServerData.startingDayOfWeek, ServerData.month, new Course(titoloCorso), new Professor(emailProfessore), new User(emailUtente));
-
+                list = dao.getOnlyAvailableBookingsForCourseAndProfessor(ServerData.startingDayOfWeek, ServerData.month, new Course(titoloCorso), new Professor(emailProfessore));
+                System.out.println(list);
                 if (list != null) {
                     Gson gson = new GsonBuilder().setPrettyPrinting().create();
                     String res = gson.toJson(list);
@@ -92,42 +98,37 @@ public class ServletGetAvBookings extends HttpServlet {
                     out.println(res);
                     out.flush();
                 }
-            } catch (Exception e) {
+            }catch (Exception e){
                 System.out.println(e.getMessage());
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
-        } else {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        }
-    }
-
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("application/json");
-        PrintWriter out = response.getWriter();
-        String titoloCorso = request.getParameter("titoloCorso");
-        String emailProfessore = request.getParameter("emailProfessore");
-        String emailUtente = request.getParameter("emailUtente");
-        if (titoloCorso != null && emailProfessore != null) {
-            try {
-                List<AvBookings> list;
-                if (emailUtente != null) {  //client
-                    list = dao.getOnlyAvailableBookingsForCourseAndProfessorPlusUser(ServerData.startingDayOfWeek, ServerData.month, new Course(titoloCorso), new Professor(emailProfessore), new User(emailUtente));
-                } else {       //guest
-                    list = dao.getOnlyAvailableBookingsForCourseAndProfessor(ServerData.startingDayOfWeek, ServerData.month, new Course(titoloCorso), new Professor(emailProfessore));
+        }else if(action != null && action.equals("mobile")){
+            String emailUtente = request.getParameter("emailUtente");
+            if(emailUtente != null && emailProfessore != null && titoloCorso != null){
+                try {
+                    handleGetBookings(titoloCorso,emailProfessore,out,emailUtente);
+                } catch (DAOException e) {
+                    System.out.println(e.getMessage());
                 }
-                Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                String res = gson.toJson(list);
-                JsonElement je = JsonParser.parseString(res);
-                res = gson.toJson(je);
-                out.println(res);
-                out.flush();
-            } catch (DAOException e) {
-                System.out.println(e.getMessage());
-            } finally {
-                out.close();
+            }else{
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
         }
     }
+
+    private void handleGetBookings(String titoloCorso, String emailProfessore, PrintWriter out, String emailUtente) throws DAOException {
+        List<AvBookings> list = null;
+        list = dao.getOnlyAvailableBookingsForCourseAndProfessorPlusUser(ServerData.startingDayOfWeek, ServerData.month, new Course(titoloCorso), new Professor(emailProfessore), new User(emailUtente));
+
+        if (list != null) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String res = gson.toJson(list);
+            JsonElement je = JsonParser.parseString(res);
+            res = gson.toJson(je);
+            out.println(res);
+            out.flush();
+        }
+    }
+
+
 }

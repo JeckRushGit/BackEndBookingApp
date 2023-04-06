@@ -69,6 +69,7 @@ public class ServletGetBookingsForUser extends HttpServlet {
 
         } else {   //mobile
             try {
+
                 if (statoString != null) {
                     handleRequest(new User(email), Integer.parseInt(statoString), out);
                 }
@@ -81,29 +82,6 @@ public class ServletGetBookingsForUser extends HttpServlet {
 
     }
 
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json");
-        String email = request.getParameter("email");
-        String statoString = request.getParameter("stato");
-        Integer stato = null;
-        try {
-            if (statoString != null) {
-                stato = Integer.valueOf(statoString);
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email), stato);
-                Gson g = new Gson();
-                String json = g.toJson(list);
-                PrintWriter out = response.getWriter();
-                out.println(json);
-                out.flush();
-            } else {
-                List<AvBookings2> list = dao.getBookingsForUser(new User(email), null);
-            }
-        } catch (DAOException e) {
-            System.out.println(e.getMessage());
-        }
-    }
 
 
     void handleRequest(User user, int stato, PrintWriter out) throws DAOException {

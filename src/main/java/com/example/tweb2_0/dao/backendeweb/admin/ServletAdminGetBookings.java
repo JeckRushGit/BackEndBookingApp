@@ -40,43 +40,41 @@ public class ServletAdminGetBookings extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.addHeader("Access-Control-Allow-Origin", "*");
+
         response.setContentType("application/json");
         String action = request.getParameter("action");
+        String device = request.getParameter("device");
         PrintWriter out = response.getWriter();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+
+        if(device != null && device.equals("web")){
+            response.setContentType("application/json");
+            response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            RequestDispatcher rd = context.getNamedDispatcher("ServletSessionHandler");
+            rd.include(request,response);
+            HttpSession sessionAvailable = (HttpSession) request.getAttribute("result");
+            if(sessionAvailable != null && sessionAvailable.getAttribute("role").equals("Administrator")){
+                handleRequest(request,response,action,out,gson);
+            }else{
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            }
+        }else{
+            response.addHeader("Access-Control-Allow-Origin", "*");
+            handleRequest(request, response, action, out, gson);
+        }
+    }
+
+    private void handleRequest(HttpServletRequest request, HttpServletResponse response, String action, PrintWriter out, Gson gson) {
         if (action != null) {
             switch (action) {
                 case ("getListOfUsers"):
-                    try {
-                        List<User> listOfUsers = dao.getUsers();
-                        String res = gson.toJson(listOfUsers);
-                        JsonElement je = JsonParser.parseString(res);
-                        res = gson.toJson(je);
-
-                        out.println(res);
-                    } catch (DAOException e) {
-                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                        out.println("Qualcosa è andato storto con il server");
-                        System.out.println(e.getMessage());
-                    }
+                    getUsers(response, out, gson);
                     break;
                 case ("getBookingsForUser"):
                     String userEmail = request.getParameter("userEmail");
-                    if(userEmail != null){
-                        try {
-                            List<AvBookings2> listOfBookings = dao.getBookingsForUser(new User(userEmail),1);
-                            String res = gson.toJson(listOfBookings);
-                            JsonElement je = JsonParser.parseString(res);
-                            res = gson.toJson(je);
-
-                            out.println(res);
-                        } catch (DAOException e) {
-                            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                            out.println("Qualcosa è andato storto con il server");
-                            System.out.println(e.getMessage());
-                        }
-                    }
+                    getBookings(response, out, gson, userEmail);
                     break;
                 default:
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -89,8 +87,37 @@ public class ServletAdminGetBookings extends HttpServlet {
         out.flush();
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    private void getUsers(HttpServletResponse response, PrintWriter out, Gson gson) {
+        try {
+            List<User> listOfUsers = dao.getUsers();
+            String res = gson.toJson(listOfUsers);
+            JsonElement je = JsonParser.parseString(res);
+            res = gson.toJson(je);
 
+            out.println(res);
+        } catch (DAOException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.println("Qualcosa è andato storto con il server");
+            System.out.println(e.getMessage());
+        }
     }
+
+    private void getBookings(HttpServletResponse response, PrintWriter out, Gson gson, String userEmail) {
+        if(userEmail != null){
+            try {
+                List<AvBookings2> listOfBookings = dao.getBookingsForUser(new User(userEmail),1);
+                String res = gson.toJson(listOfBookings);
+                JsonElement je = JsonParser.parseString(res);
+                res = gson.toJson(je);
+
+                out.println(res);
+            } catch (DAOException e) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                out.println("Qualcosa è andato storto con il server");
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+
 }

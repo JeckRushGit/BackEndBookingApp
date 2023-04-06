@@ -48,22 +48,19 @@ public class ServletGetTeachings extends HttpServlet {
             RequestDispatcher rd = context.getNamedDispatcher("ServletSessionHandler");
             rd.include(request, response);
             HttpSession sessionAvailable = (HttpSession) request.getAttribute("result");
-            if (sessionAvailable != null) {
-                try {
-                    List<Teaching> teachingList = dao.getTeachings();
-                    Gson gson = new Gson();
-                    String res = gson.toJson(teachingList);
-                    out.println(res);
-                    out.flush();
-                } catch (DAOException e) {
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    out.write("Errore");
-                    out.flush();
-                    System.out.println(e.getMessage());
-                }
-            } else {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            try {
+                List<Teaching> teachingList = dao.getTeachings();
+                Gson gson = new Gson();
+                String res = gson.toJson(teachingList);
+                out.println(res);
+                out.flush();
+            } catch (DAOException e) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                out.write("Errore");
+                out.flush();
+                System.out.println(e.getMessage());
             }
+
         } else {
             try {
                 List<Teaching> teachingList = dao.getTeachings();
@@ -83,15 +80,14 @@ public class ServletGetTeachings extends HttpServlet {
     }
 
 
-
-    private Map<Professor,List<Course>> createMap(List<Teaching> list){
-        Map<Professor,List<Course>> map = new HashMap<>();
-        for(Teaching t : list){
-            if(!map.containsKey(t.getProfessor())){
+    private Map<Professor, List<Course>> createMap(List<Teaching> list) {
+        Map<Professor, List<Course>> map = new HashMap<>();
+        for (Teaching t : list) {
+            if (!map.containsKey(t.getProfessor())) {
                 List<Course> listOfCourses = new ArrayList<>();
                 listOfCourses.add(t.getCourse());
-                map.put(t.getProfessor(),listOfCourses);
-            }else{
+                map.put(t.getProfessor(), listOfCourses);
+            } else {
                 List<Course> listOfCourses = map.get(t.getProfessor());
                 listOfCourses.add(t.getCourse());
             }

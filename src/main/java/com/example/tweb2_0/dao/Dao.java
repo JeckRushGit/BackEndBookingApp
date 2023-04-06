@@ -149,6 +149,25 @@ public class Dao {
         }
     }
 
+    public List<Professor> getProfessors() throws DAOException {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        List<Professor> listResult = new ArrayList<>();
+        try {
+            con = connectToDB();
+            stmt = con.prepareStatement("SELECT * FROM docenti WHERE Delete_date = ''");
+            ResultSet res = stmt.executeQuery();
+            while (res.next()){
+                listResult.add(new Professor(res.getString("Email"), res.getString("Nome"),res.getString("Cognome")));
+            }
+            return listResult;
+        } catch (SQLException e) {
+            throw new DAOException(e);
+        } finally {
+            handleFinalBlock(con);
+        }
+    }
+
     public int removeCourse(Course course) throws DAOException {
         Connection con = null;
         try {
@@ -397,7 +416,6 @@ public class Dao {
 
     public List<AvBookings> getOnlyAvailableBookingsForCourseAndProfessor(int startingDayOfWeek, int month,Course course,Professor professor) throws DAOException {
         List<AvBookings> list = getOnlyAvailableBookings(startingDayOfWeek,month);
-
         List<AvBookings> filteredList = new ArrayList<>();
         for(AvBookings b :list){
             if(b.getCourse().equals(course) && b.getProfessor().equals(professor)){
@@ -583,6 +601,31 @@ public class Dao {
         }
     }
 
+    public List<Course> getAvailableCourseForProfessor(Professor professor) throws DAOException {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        List<Course> listResult = new ArrayList<>();
+        try {
+            con = connectToDB();
+            stmt = con.prepareStatement("SELECT c.Titolo\n" +
+                    "FROM corsi c\n" +
+                    "WHERE c.Delete_date = '' AND c.Titolo NOT in\n" +
+                    "(SELECT i.Titolo_corso\n" +
+                    "FROM insegnamenti i WHERE i.Email_docente = ? AND i.Delete_date = '')");
+            stmt.setString(1,professor.getEmail());
+            ResultSet res = stmt.executeQuery();
+            while (res.next()){
+                listResult.add(new Course(res.getString("Titolo")));
+            }
+            return listResult;
+        }catch (SQLException e){
+            throw new DAOException(e);
+        }finally {
+            handleFinalBlock(con);
+        }
+    }
+
+
 
     private void checkForDeleteDate(String QUERY, Connection con) throws DAOException, SQLException {
 
@@ -629,7 +672,7 @@ public class Dao {
     public static void main(String[] args) {
         Dao d = new Dao("jdbc:mysql://localhost:3306/ripetizioni","root","");
         try {
-            d.getAvailableBookings(new Course("Matematica"),new Professor("pippo@gmail.com"),16,1);
+            System.out.println(d.getAvailableCourseForProfessor(new Professor("pippo@gmail.com")));
         } catch (DAOException e) {
             throw new RuntimeException(e);
         }
