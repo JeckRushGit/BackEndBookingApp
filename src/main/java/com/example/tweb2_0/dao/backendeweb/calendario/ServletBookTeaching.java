@@ -134,7 +134,7 @@ public class ServletBookTeaching extends HttpServlet {
 
                     }else{
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                        out.write("Erroreeeeeeeee");
+                        out.write("Errore");
                         out.flush();
                     }
                 } catch (DAOException e) {

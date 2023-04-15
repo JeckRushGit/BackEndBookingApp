@@ -86,7 +86,6 @@ public class ServletGetAvBookings extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         } else if(action != null && action.equals("guest")){
             try{
-                System.out.println("ciao");
                 List<AvBookings> list = null;
                 list = dao.getOnlyAvailableBookingsForCourseAndProfessor(ServerData.startingDayOfWeek, ServerData.month, new Course(titoloCorso), new Professor(emailProfessore));
                 System.out.println(list);
