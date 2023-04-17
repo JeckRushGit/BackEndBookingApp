@@ -41,8 +41,12 @@ public class ServletAdminGetBookings extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+
+
+
         response.setContentType("application/json");
         String action = request.getParameter("action");
+
         String device = request.getParameter("device");
         PrintWriter out = response.getWriter();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -52,7 +56,9 @@ public class ServletAdminGetBookings extends HttpServlet {
             response.setContentType("application/json");
             response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
             response.setHeader("Access-Control-Allow-Credentials", "true");
+
             RequestDispatcher rd = context.getNamedDispatcher("ServletSessionHandler");
+
             rd.include(request,response);
             HttpSession sessionAvailable = (HttpSession) request.getAttribute("result");
             if(sessionAvailable != null && sessionAvailable.getAttribute("role").equals("Administrator")){

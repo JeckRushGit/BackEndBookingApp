@@ -56,7 +56,6 @@ public class ServletLogin extends HttpServlet {
                         user = dao.getUser(email);
                         if (user != null && checkPassword(user, password)) {
                             session = request.getSession(true);
-
                             session.setAttribute("email", user.getEmail());
                             session.setAttribute("name", user.getName());
                             session.setAttribute("surname", user.getSurname());

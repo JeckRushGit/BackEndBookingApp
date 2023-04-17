@@ -43,9 +43,11 @@ public class ServletGetUserInfo extends HttpServlet {
         if(sessionAvailable != null){
             try {
                 User user = new User((String) sessionAvailable.getAttribute("email"),(String) sessionAvailable.getAttribute("name"),(String) sessionAvailable.getAttribute("surname"),null,(String) sessionAvailable.getAttribute("birthday"),(String) sessionAvailable.getAttribute("profession"),(String) sessionAvailable.getAttribute("role"));
-
                 Gson g = new Gson();
                 String data = g.toJson(user);
+
+
+
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().println(data);
             }catch (Exception e){
